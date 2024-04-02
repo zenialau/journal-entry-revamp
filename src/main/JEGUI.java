@@ -53,7 +53,17 @@ public class JEGUI extends ExcelReader implements ActionListener {
     // MODIFIES: this
     // EFFECTS: add hidden warning labels to panel (will be visible if conditions met at button pressed)
     private void setupWarningLabels() {
-        //stub
+        invalidInputLabel = new JLabel("Invalid input: double-check amount and accounts");
+        invalidInputLabel.setBounds(10, 180, 350, 25);
+        invalidInputLabel.setForeground(Color.red);
+        panel.add(invalidInputLabel);
+        invalidInputLabel.setVisible(false);
+
+        failedWriteLabel = new JLabel("Failed to write: check file path");
+        failedWriteLabel.setBounds(10, 180, 350, 25);
+        failedWriteLabel.setForeground(Color.red);
+        panel.add(failedWriteLabel);
+        failedWriteLabel.setVisible(false);
     }
 
     // MODIFIES: this
@@ -146,33 +156,42 @@ public class JEGUI extends ExcelReader implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) { // confirmButton pressed
+        // reset labels
+        invalidInputLabel.setVisible(false);
+        failedWriteLabel.setVisible(false);
 
+        try {
+            writeJE();
+        } catch (InvalidInputException ex) {
+            invalidInputLabel.setVisible(true);
+        } catch (NumberFormatException ex) {
+            invalidInputLabel.setVisible(true);
+        } catch (IOException ex) {
+            failedWriteLabel.setVisible(true);
+        }
+
+    }
+
+    private void writeJE() throws InvalidInputException, NumberFormatException, IOException {
         // get user input
         String dateInput = dateField.getText();
         String commentInput = commentField.getText();
         String debitAcc = accOpDebit.getSelectedItem().toString();
         String creditAcc = accOpCredit.getSelectedItem().toString();
 
-        if (amountField.getText().isBlank() || debitAcc == creditAcc) {
-            // show warning label & dont add JournalEntry to excel file
-            // - "Double-check your amount and accounts"
+        if (dateField.getText().isBlank() || amountField.getText().isBlank() || debitAcc.equals(creditAcc)) {
+            throw new InvalidInputException();
         }
+        double amountInput = Double.parseDouble(amountField.getText());
 
-        else // user inputs are valid
-        {
-            double amountInput = Double.parseDouble(amountField.getText());
-            // make new JournalEntry
-            JournalEntry je = new JournalEntry(excelFilePath, dateInput, commentInput, amountInput, debitAcc, creditAcc);
-            try {
-                je.writeJE();
-            } catch (IOException ex) {
-                // warning label: failed to write to Excel file
-            }
+        // make new JournalEntry
+        JournalEntry je = new JournalEntry(excelFilePath, dateInput, commentInput, amountInput, debitAcc, creditAcc);
+        je.writeJE();
 
-            // everything is fine and JE written successfully
-            new JEGUI();
-            frame.dispose();
-        }
-
+        // everything is fine and JE written successfully
+        new JEGUI();
+        frame.dispose();
     }
+
+
 }
