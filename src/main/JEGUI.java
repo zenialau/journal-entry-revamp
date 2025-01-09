@@ -4,17 +4,20 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 
 // the main GUI to run
 public class JEGUI extends ExcelReader implements ActionListener {
-    private static final String excelFilePath = "./data/testFile.xlsx"; //!!! change later
+    private static String excelFilePath = "./data/testFile.xlsx"; //!!! change later
     private static final int FRAME_WIDTH = 500;
     private static final int FRAME_HEIGHT = 240;
 
     private JFrame frame;
     private JPanel panel;
     private JLabel fileLabel;
+    private JButton fileChooserButton;
+
     private JLabel dateLabel;
     private JTextField dateField;
     private JLabel commentLabel;
@@ -28,6 +31,7 @@ public class JEGUI extends ExcelReader implements ActionListener {
     private JButton confirmButton;
     private JLabel invalidInputLabel;
     private JLabel failedWriteLabel;
+    private JLabel invalidFileLabel;
 
     // EFFECTS: constructs a Journal Entry GUI
     public JEGUI() {
@@ -36,6 +40,8 @@ public class JEGUI extends ExcelReader implements ActionListener {
         setupFrame();
 
         setupFileLabel();
+
+        setupFileButton(); //new
 
         setupDateComment();
 
@@ -48,6 +54,24 @@ public class JEGUI extends ExcelReader implements ActionListener {
         setupWarningLabels();
 
         frame.setVisible(true);
+    }
+
+    // MODIFIES: this
+    // EFFECTS: add excelFilePath as a label at top right corner of panel
+    private void setupFileLabel() {
+        String label = "Selected file: " + excelFilePath;
+        fileLabel = new JLabel(label);
+        fileLabel.setBounds(10, 2, 380, 25);
+        panel.add(fileLabel);
+    }
+
+    // MODIFIES: this
+    // EFFECTS: add and set up file chooser
+    private void setupFileButton() {
+        fileChooserButton = new JButton("Choose File");
+        fileChooserButton.setBounds(400, 5, 100, 25);
+        fileChooserButton.addActionListener(this);
+        panel.add(fileChooserButton);
     }
 
     // MODIFIES: this
@@ -64,6 +88,12 @@ public class JEGUI extends ExcelReader implements ActionListener {
         failedWriteLabel.setForeground(Color.red);
         panel.add(failedWriteLabel);
         failedWriteLabel.setVisible(false);
+
+        invalidFileLabel = new JLabel("Invalid file: select a .xlsx file");
+        invalidFileLabel.setBounds(10, 180, 350, 25);
+        invalidFileLabel.setForeground(Color.red);
+        panel.add(invalidFileLabel);
+        invalidFileLabel.setVisible(false);
     }
 
     // MODIFIES: this
@@ -86,28 +116,48 @@ public class JEGUI extends ExcelReader implements ActionListener {
         }
 
         debitLabel = new JLabel("Debit");
-        debitLabel.setBounds(180, 100, 80, 25);
+        debitLabel.setBounds(180, 110, 80, 25);
         panel.add(debitLabel);
         accOpDebit = new JComboBox<>(accOptions);
-        accOpDebit.setBounds(170, 125, 130, 25);
+        accOpDebit.setBounds(170, 135, 130, 25);
         panel.add(accOpDebit);
 
         creditLabel = new JLabel("Credit");
-        creditLabel.setBounds(310, 100, 80, 25);
+        creditLabel.setBounds(310, 110, 80, 25);
         panel.add(creditLabel);
         accOpCredit = new JComboBox<>(accOptions);
-        accOpCredit.setBounds(300, 125, 130, 25);
+        accOpCredit.setBounds(300, 135, 130, 25);
         panel.add(accOpCredit);
+    }
+
+    // MODIFIES: this
+    // EFFECTS: update the combo box for the account options for this excel file
+    private void updateAccountOptions() {
+        String[] accOptions = null;
+        try {
+            accOptions = readAccounts(excelFilePath).toArray(new String[0]);
+        } catch (IOException e) {
+            System.out.println("failed to read accounts");
+        }
+        updateComboBox(accOpDebit, accOptions);
+        updateComboBox(accOpCredit, accOptions);
+    }
+
+    private void updateComboBox(JComboBox<String> comboBox, String[] accOptions) {
+        comboBox.removeAllItems();
+        for (String option : accOptions) {
+            comboBox.addItem(option);
+        }
     }
 
     // MODIFIES: this
     // EFFECTS: add label and comment for amount
     private void setupAmount() {
         amountLabel = new JLabel("Amount");
-        amountLabel.setBounds(55, 100, 80, 25);
+        amountLabel.setBounds(55, 110, 80, 25);
         panel.add(amountLabel);
         amountField = new JTextField(20);
-        amountField.setBounds(50, 125, 100, 25);
+        amountField.setBounds(50, 135, 100, 25);
         panel.add(amountField);
     }
 
@@ -115,26 +165,18 @@ public class JEGUI extends ExcelReader implements ActionListener {
     // EFFECTS: add label and fields for date and comment
     private void setupDateComment() {
         dateLabel = new JLabel("Date");
-        dateLabel.setBounds(10, 20, 80, 25);
+        dateLabel.setBounds(10, 40, 80, 25);
         panel.add(dateLabel);
         dateField = new JTextField(20);
-        dateField.setBounds(100, 20, 165, 25);
+        dateField.setBounds(100, 40, 165, 25);
         panel.add(dateField);
 
         commentLabel = new JLabel("Comment");
-        commentLabel.setBounds(10, 50, 80, 25);
+        commentLabel.setBounds(10, 70, 80, 25);
         panel.add(commentLabel);
         commentField = new JTextField();
-        commentField.setBounds(100, 50, 300, 25);
+        commentField.setBounds(100, 70, 300, 25);
         panel.add(commentField);
-    }
-
-    // MODIFIES: this
-    // EFFECTS: add excelFilePath as a label at top right corner of panel
-    private void setupFileLabel() {
-        fileLabel = new JLabel(excelFilePath);
-        fileLabel.setBounds(370, 2, 120, 25);
-        panel.add(fileLabel);
     }
 
     // MODIFIES: this
@@ -155,21 +197,38 @@ public class JEGUI extends ExcelReader implements ActionListener {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) { // confirmButton pressed
-        // reset labels
-        invalidInputLabel.setVisible(false);
-        failedWriteLabel.setVisible(false);
-
-        try {
-            writeJE();
-        } catch (InvalidInputException ex) {
-            invalidInputLabel.setVisible(true);
-        } catch (NumberFormatException ex) {
-            invalidInputLabel.setVisible(true);
-        } catch (IOException ex) {
-            failedWriteLabel.setVisible(true);
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == fileChooserButton) {
+            invalidFileLabel.setVisible(false);
+            JFileChooser fileChooser = new JFileChooser();
+            int result = fileChooser.showOpenDialog(null);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                excelFilePath = selectedFile.getAbsolutePath();
+                //!!! check that excelFilePath ends with .xlsx
+                if (!excelFilePath.endsWith(".xlsx")) {
+                    invalidFileLabel.setVisible(true);
+                } else {
+                    this.updateAccountOptions();
+                    fileLabel.setText("Selected file: " + excelFilePath);
+                }
+            }
         }
+        else { // confirmButton pressed
+            // reset labels
+            invalidInputLabel.setVisible(false);
+            failedWriteLabel.setVisible(false);
 
+            try {
+                writeJE();
+            } catch (InvalidInputException ex) {
+                invalidInputLabel.setVisible(true);
+            } catch (NumberFormatException ex) {
+                invalidInputLabel.setVisible(true);
+            } catch (IOException ex) {
+                failedWriteLabel.setVisible(true);
+            }
+        }
     }
 
     private void writeJE() throws InvalidInputException, NumberFormatException, IOException {
