@@ -5,7 +5,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Properties;
 
 // the main GUI to run
 public class JEGUI extends ExcelReader implements ActionListener {
@@ -35,6 +38,8 @@ public class JEGUI extends ExcelReader implements ActionListener {
 
     // EFFECTS: constructs a Journal Entry GUI
     public JEGUI() {
+        loadProperties();
+
         setupPanel();
 
         setupFrame();
@@ -205,8 +210,7 @@ public class JEGUI extends ExcelReader implements ActionListener {
             if (result == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
                 excelFilePath = selectedFile.getAbsolutePath();
-                //!!! check that excelFilePath ends with .xlsx
-                if (!excelFilePath.endsWith(".xlsx")) {
+                if (!excelFilePath.endsWith(".xlsx")) { // check that it's an excel file
                     invalidFileLabel.setVisible(true);
                 } else {
                     this.updateAccountOptions();
@@ -215,6 +219,7 @@ public class JEGUI extends ExcelReader implements ActionListener {
             }
         }
         else { // confirmButton pressed
+            saveProperties();
             // reset labels
             invalidInputLabel.setVisible(false);
             failedWriteLabel.setVisible(false);
@@ -250,6 +255,26 @@ public class JEGUI extends ExcelReader implements ActionListener {
         // everything is fine and JE written successfully
         new JEGUI();
         frame.dispose();
+    }
+
+    private void loadProperties() {
+        Properties properties = new Properties();
+        try (FileInputStream in = new FileInputStream("config.properties")) {
+            properties.load(in);
+            excelFilePath = properties.getProperty("excelFilePath", "./data/testFile.xlsx");
+        } catch (IOException e) {
+            excelFilePath = "./data/testFile.xlsx";
+        }
+    }
+
+    private void saveProperties() {
+        Properties properties = new Properties();
+        properties.setProperty("excelFilePath", excelFilePath);
+        try (FileOutputStream out = new FileOutputStream("config.properties")) {
+            properties.store(out, null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
