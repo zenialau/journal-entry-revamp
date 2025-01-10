@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="poi-5.2.3" level="project" />
+    <orderEntry type="library" name="poi-5.2.3" level="project" />
     <orderEntry type="library" name="commons-compress-1.21" level="project" />
     <orderEntry type="library" name="commons-codec-1.15" level="project" />
     <orderEntry type="module-library">

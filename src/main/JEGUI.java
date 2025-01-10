@@ -12,7 +12,9 @@ import java.util.Properties;
 
 // the main GUI to run
 public class JEGUI extends ExcelReader implements ActionListener {
-    private static String excelFilePath = "./data/testFile.xlsx"; //!!! change later
+    private static final String defaultPath = "./data/testFile.xlsx";
+
+    private static String excelFilePath;
     private static final int FRAME_WIDTH = 500;
     private static final int FRAME_HEIGHT = 240;
 
@@ -113,26 +115,30 @@ public class JEGUI extends ExcelReader implements ActionListener {
     // MODIFIES: this
     // EFFECTS: add label and combo box for debit and credit
     private void setupDebitCredit() {
-        String[] accOptions = null;
+        String[] accOptions;
         try {
             accOptions = readAccounts(excelFilePath).toArray(new String[0]);
+            System.out.println(" > successfully read accounts");
+
+            accOpDebit = new JComboBox<>(accOptions);
+            accOpDebit.setBounds(170, 135, 130, 25);
+            panel.add(accOpDebit);
+
+            accOpCredit = new JComboBox<>(accOptions);
+            accOpCredit.setBounds(300, 135, 130, 25);
+            panel.add(accOpCredit);
+
         } catch (IOException e) {
-            System.out.println("failed to read accounts");
+            System.out.println(" > failed to read accounts");
         }
 
         debitLabel = new JLabel("Debit");
         debitLabel.setBounds(180, 110, 80, 25);
         panel.add(debitLabel);
-        accOpDebit = new JComboBox<>(accOptions);
-        accOpDebit.setBounds(170, 135, 130, 25);
-        panel.add(accOpDebit);
 
         creditLabel = new JLabel("Credit");
         creditLabel.setBounds(310, 110, 80, 25);
         panel.add(creditLabel);
-        accOpCredit = new JComboBox<>(accOptions);
-        accOpCredit.setBounds(300, 135, 130, 25);
-        panel.add(accOpCredit);
     }
 
     // MODIFIES: this
@@ -226,13 +232,16 @@ public class JEGUI extends ExcelReader implements ActionListener {
 
             try {
                 writeJE();
-            } catch (InvalidInputException ex) {
-                invalidInputLabel.setVisible(true);
-            } catch (NumberFormatException ex) {
-                invalidInputLabel.setVisible(true);
             } catch (IOException ex) {
                 failedWriteLabel.setVisible(true);
+            } catch (Exception ex) {
+                invalidInputLabel.setVisible(true);
             }
+//            catch (InvalidInputException ex) {
+//                invalidInputLabel.setVisible(true);
+//            } catch (NumberFormatException ex) {
+//                invalidInputLabel.setVisible(true);
+//            }
         }
     }
 
@@ -261,9 +270,9 @@ public class JEGUI extends ExcelReader implements ActionListener {
         Properties properties = new Properties();
         try (FileInputStream in = new FileInputStream("config.properties")) {
             properties.load(in);
-            excelFilePath = properties.getProperty("excelFilePath", "./data/testFile.xlsx");
+            excelFilePath = properties.getProperty("excelFilePath", defaultPath);
         } catch (IOException e) {
-            excelFilePath = "./data/testFile.xlsx";
+            excelFilePath = defaultPath;
         }
     }
 
