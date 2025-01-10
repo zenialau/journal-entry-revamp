@@ -150,26 +150,24 @@ public class JEGUI extends ExcelReader implements ActionListener {
         } catch (IOException e) {
             System.out.println("failed to read accounts");
         }
-        updateComboBox(accOpDebit, accOptions, 'd');
-        updateComboBox(accOpCredit, accOptions, 'c');
+        updateComboBox(accOptions);
     }
 
-    private void updateComboBox(JComboBox<String> comboBox, String[] accOptions, char option) {
-        if (comboBox != null) {
-            comboBox.removeAllItems();
+    private void updateComboBox(String[] accOptions) {
+        if (this.accOpDebit != null) {
+            this.accOpDebit.removeAllItems();
+            this.accOpCredit.removeAllItems();
             for (String acc : accOptions) {
-                comboBox.addItem(acc);
+                this.accOpDebit.addItem(acc);
+                this.accOpCredit.addItem(acc);
             }
         } else {
-            comboBox = new JComboBox<>(accOptions);
-            if (option == 'd') {
-                comboBox.setBounds(170, 135, 130, 25);
-                panel.add(comboBox);
-            } else if (option == 'c') {
-                comboBox.setBounds(300, 135, 130, 25);
-                panel.add(comboBox);
-            }
-
+            this.accOpDebit = new JComboBox<>(accOptions);
+            this.accOpDebit.setBounds(170, 135, 130, 25);
+            panel.add(this.accOpDebit);
+            this.accOpCredit = new JComboBox<>(accOptions);
+            this.accOpCredit.setBounds(300, 135, 130, 25);
+            panel.add(this.accOpCredit);
         }
     }
 
@@ -261,7 +259,7 @@ public class JEGUI extends ExcelReader implements ActionListener {
         // get user input
         String dateInput = dateField.getText();
         String commentInput = commentField.getText();
-        String debitAcc = accOpDebit.getSelectedItem().toString();
+        String debitAcc = accOpDebit.getSelectedItem().toString(); //accOpDebit is null
         String creditAcc = accOpCredit.getSelectedItem().toString();
 
         if (dateField.getText().isBlank() || amountField.getText().isBlank() || debitAcc.equals(creditAcc)) {
