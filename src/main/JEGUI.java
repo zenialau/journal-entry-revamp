@@ -115,7 +115,7 @@ public class JEGUI extends ExcelReader implements ActionListener {
     // MODIFIES: this
     // EFFECTS: add label and combo box for debit and credit
     private void setupDebitCredit() {
-        String[] accOptions;
+        String[] accOptions = null;
         try {
             accOptions = readAccounts(excelFilePath).toArray(new String[0]);
             System.out.println(" > successfully read accounts");
@@ -150,14 +150,26 @@ public class JEGUI extends ExcelReader implements ActionListener {
         } catch (IOException e) {
             System.out.println("failed to read accounts");
         }
-        updateComboBox(accOpDebit, accOptions);
-        updateComboBox(accOpCredit, accOptions);
+        updateComboBox(accOpDebit, accOptions, 'd');
+        updateComboBox(accOpCredit, accOptions, 'c');
     }
 
-    private void updateComboBox(JComboBox<String> comboBox, String[] accOptions) {
-        comboBox.removeAllItems();
-        for (String option : accOptions) {
-            comboBox.addItem(option);
+    private void updateComboBox(JComboBox<String> comboBox, String[] accOptions, char option) {
+        if (comboBox != null) {
+            comboBox.removeAllItems();
+            for (String acc : accOptions) {
+                comboBox.addItem(acc);
+            }
+        } else {
+            comboBox = new JComboBox<>(accOptions);
+            if (option == 'd') {
+                comboBox.setBounds(170, 135, 130, 25);
+                panel.add(comboBox);
+            } else if (option == 'c') {
+                comboBox.setBounds(300, 135, 130, 25);
+                panel.add(comboBox);
+            }
+
         }
     }
 
@@ -234,14 +246,14 @@ public class JEGUI extends ExcelReader implements ActionListener {
                 writeJE();
             } catch (IOException ex) {
                 failedWriteLabel.setVisible(true);
-            } catch (Exception ex) {
+            }
+            catch (InvalidInputException ex) {
+                System.out.println("!!! invalid input");
+                invalidInputLabel.setVisible(true);
+            } catch (NumberFormatException ex) {
+                System.out.println("!!! number format exception");
                 invalidInputLabel.setVisible(true);
             }
-//            catch (InvalidInputException ex) {
-//                invalidInputLabel.setVisible(true);
-//            } catch (NumberFormatException ex) {
-//                invalidInputLabel.setVisible(true);
-//            }
         }
     }
 
